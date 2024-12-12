@@ -74,4 +74,4 @@ If you find anything in the paper or repository useful, please consider citing:
 ## Acknowledgments
 This work is supported by the National Institute on Aging (NIA) grant RF1AG073424, P30AG072980, the Arizona Department of Health Services (ADHS) and the state of Arizona (ADHS Grant No. CTR057001).
 ______________________
-Feel free to reach out in case of any queries [jayshah.me](jayshah.me)
+Feel free to reach out in case of any queries [jayshah.me](http://jayshah.me/)
