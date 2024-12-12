@@ -5,10 +5,10 @@
 ## Overview
 A novel approach to improve Amyloid quantification and address partial volume effect (PVE) in PET using MRI-guided super-resolution with latent diffusion model. The diffusion model is trained on synthetic data simulated from real MRI scans using PET imaging physics.
 
-![Architecture Overview](assets/overview.png)
+<img src="assets/overview.png" width="750">
 
 ### Qualitative Results
-![Results](assets/results.png)
+<img src="assets/results.png" width="750">
 
 This repository contains:
 
@@ -71,3 +71,7 @@ If you find anything in the paper or repository useful, please consider citing:
   publisher={MDPI}
 }
 ```
+## Acknowledgments
+This work is supported by the National Institute on Aging (NIA) grant RF1AG073424, P30AG072980, the Arizona Department of Health Services (ADHS) and the state of Arizona (ADHS Grant No. CTR057001).
+______________________
+Feel free to reach out in case of any queries [jayshah.me](jayshah.me)
