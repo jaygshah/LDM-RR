@@ -24,7 +24,7 @@ from generative.losses import PatchAdversarialLoss, PerceptualLoss
 from generative.networks.nets import AutoencoderKL, DiffusionModelUNet, PatchDiscriminator
 from generative.networks.schedulers import DDPMScheduler
 
-from data_loaders_dict_mrpet import get_loader
+from data_loaders_dict import get_loader
 
 def get_n_params(model):
     pp=0
@@ -37,7 +37,7 @@ def get_n_params(model):
 
 def main():
 
-    parser = argparse.ArgumentParser(description='MONAI 3D translation')
+    parser = argparse.ArgumentParser(description='LDM-RR LatentDiffusionModel')
     parser.add_argument('-d', '--dataset', default='spdp_fbp', type=str)
     parser.add_argument('--epochs', default=100, type=int, metavar='N',
                         help='number of total epochs to run')
