@@ -52,7 +52,7 @@ Use modality = [sp, dp, or mr] to train models for simulated PET (low-res), digi
 
 For training the latent diffusion model:
 ```bash
-python3 .py --dataset /path/to/data --modality sp --epochs 60 --batch_size 2 
+python3 train_ldm_fbp_sp2dp.py --dataset /path/to/data --modality sp --epochs 60 --batch_size 2 
 ```
 
 ## Citation
