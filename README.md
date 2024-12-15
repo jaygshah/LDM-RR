@@ -21,7 +21,7 @@ Instructions to install MONAI can be found [here](https://docs.monai.io/en/stabl
 Packages used in the current version of this code.
 
 ## Dataset
-You should structure your dataset in the following way, where `images` contain low-resolution images, `mrs` contain matching MRI scans and `targets` contain ground-truth high-resolution scans (digital phantoms here). For an example checkout `./src/spdp_fbp` folder.
+You should structure your dataset in the following way, where `images` contain low-resolution images, `mrs` contain matching MRI scans and `targets` contain ground-truth high-resolution scans (digital phantoms here). For an example checkout `./src/spdp_fbp` folder. All modality images are 256x256x256 in dimensions (sample images for reference in `./src/sample` directory).
 ```
 dataset/
   ├── train
