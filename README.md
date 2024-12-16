@@ -26,16 +26,16 @@ You should structure your dataset in the following way, where `images` contain l
 dataset/
   ├── train
     ├──images
-  	  ├──xxx.nii.gz
-          ├──...
+      ├──xxx.nii.gz
+      ├──...
   ├── val
     ├──mrs
-  	  ├──yyy.nii.gz
-          ├──...
+      ├──yyy.nii.gz
+      ├──...
   ├── test
     ├──targets
-  	  ├──zzz.nii.gz
-          ├──...
+      ├──zzz.nii.gz
+      ├──...
 ```
 ## Inference
 Training and inference scripts are in `./src` folder. Sample inputs `./sample` and generated outputs `./results` are also provided.  
