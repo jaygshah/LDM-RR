@@ -5,17 +5,20 @@ from monai.data import Dataset, list_data_collate, DataLoader
 from monai import transforms
 from monai.utils import first
 
-def gz_get_loader(image_dir, batch_size=1, mode='train', num_workers=2):
+def get_data_loader(image_dir, batch_size=1, mode='train'):
     """Build and return a data loader."""
     channel = 0
     assert channel in [0, 1, 2, 3], "Choose a valid channel"
 
+    # Get sorted lists of image, target, and MR file paths
     images = sorted(glob(image_dir+"/images/*.nii.gz"))
     targets = sorted(glob(image_dir+"/targets/*.nii.gz"))
     mrs = sorted(glob(image_dir+"/mrs/*.nii.gz"))
 
+    # Create a list of dictionaries with file paths
     files = [{"img": img, "trgt": trgt, "mr": mr} for img, trgt, mr in zip(images, targets, mrs)]
 
+    # Define transformations for training mode
     if mode == 'train':
         my_transforms = transforms.Compose(
             [
@@ -27,8 +30,9 @@ def gz_get_loader(image_dir, batch_size=1, mode='train', num_workers=2):
             transforms.Orientationd(keys=["img", "trgt", "mr"], axcodes="RAS"),
             transforms.ThresholdIntensityd(keys=["img", "trgt", "mr"], threshold=0.0, above=True, cval=0.0),
             transforms.ScaleIntensityRanged(keys=["mr"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0),
-            transforms.RandSpatialCropSamplesd(keys=["img", "trgt", "mr"], roi_size=(64, 64, 64), num_samples = 60, random_size=False),
+            transforms.RandSpatialCropSamplesd(keys=["img", "trgt", "mr"], roi_size=(64, 64, 64), num_samples=60, random_size=False),
             ])
+    # Define transformations for validation/test mode
     else:
         my_transforms = transforms.Compose(
             [
@@ -42,9 +46,11 @@ def gz_get_loader(image_dir, batch_size=1, mode='train', num_workers=2):
             transforms.ScaleIntensityRanged(keys=["mr"], a_min=0.0, a_max=255.0, b_min=0.0, b_max=1.0),
             ])
 
+    # Create dataset and data loader
     dataset = Dataset(data=files, transform=my_transforms)
     data_loader = DataLoader(dataset, batch_size=batch_size, num_workers=4, collate_fn=list_data_collate)
 
+    # Uncomment to check the first batch of data
     # check_data = first(data_loader)
     # print(check_data["img"].shape)
     
@@ -52,7 +58,8 @@ def gz_get_loader(image_dir, batch_size=1, mode='train', num_workers=2):
 
 
 if __name__ == '__main__':
-    loader = get_loader('./spdp_fbp/val/', batch_size=1, mode="train")
+    # Load data and print information about the first batch
+    loader = get_data_loader('./spdp_fbp/val/', batch_size=1, mode="train")
     check_data = first(loader)
     print(check_data["img"].shape, check_data["img"].meta["filename_or_obj"][0].split("/")[-1].split(".nii")[0], torch.min(check_data["img"]), torch.max(check_data["img"]))
     print(check_data["trgt"].shape, check_data["trgt"].meta["filename_or_obj"][0].split("/")[-1].split(".nii")[0], torch.min(check_data["trgt"]), torch.max(check_data["trgt"]))

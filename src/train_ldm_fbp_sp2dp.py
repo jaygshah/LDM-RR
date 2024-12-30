@@ -26,6 +26,7 @@ from generative.networks.schedulers import DDPMScheduler
 
 from data_loaders_dict import get_loader
 
+# Function to calculate the number of parameters in a model
 def get_n_params(model):
     pp=0
     for p in list(model.parameters()):
@@ -37,6 +38,7 @@ def get_n_params(model):
 
 def main():
 
+    # Argument parser for command line arguments
     parser = argparse.ArgumentParser(description='LDM-RR LatentDiffusionModel')
     parser.add_argument('-d', '--dataset', default='spdp_fbp', type=str)
     parser.add_argument('--epochs', default=100, type=int, metavar='N',
@@ -54,6 +56,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    # Create a folder to save training results
     timestamp = datetime.datetime.now().strftime("%m%d%y%H%M%S")
     training_folder = f"./{args.dataset}_sp2dp_spmrcond_{timestamp}"
 
@@ -64,11 +67,13 @@ def main():
         print(f"{training_folder} exists!")
         exit()
 
+    # Save the training parameters to a JSON file
     with open(f'{training_folder}/params.json', 'w') as f:
         json.dump(args.__dict__, f, indent=4)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    # Load pre-trained autoencoders
     ae_sp = AutoencoderKL(
         spatial_dims=3,
         in_channels=1,
@@ -110,14 +115,16 @@ def main():
 
     print("Results saved at: ", training_folder)
 
+    # Load training dataset
     dataset_train = get_loader(f'./{args.dataset}/train', batch_size=args.batch_size, mode="train")
 
-    #--------------------------------------------------------------------------------------------------------
+    # Set input channels based on mode
     if args.mode == "concat":
         my_in_channels = 9
     else:
         my_in_channels = 3
 
+    # Initialize the UNet model
     unet = DiffusionModelUNet(
         spatial_dims=3,
         in_channels=my_in_channels,
@@ -132,8 +139,10 @@ def main():
     unet.to(device)
     print("DiffusionModelUNet parameters:", get_n_params(unet))
 
+    # Initialize the scheduler
     scheduler = DDPMScheduler(num_train_timesteps=1000, schedule="scaled_linear_beta", beta_start=0.0015, beta_end=0.0195)
 
+    # Check data and calculate scaling factor
     check_data = first(dataset_train)
     with torch.no_grad():
         with autocast(enabled=True):
@@ -142,6 +151,7 @@ def main():
     print(f"Scaling factor set to {1/torch.std(z)}")
     scale_factor = 1 / torch.std(z)
 
+    # Initialize the inferer and optimizer
     inferer = LatentDiffusionInferer(scheduler, scale_factor=scale_factor)
     optimizer_diff = torch.optim.Adam(params=unet.parameters(), lr=1e-4)
 
@@ -154,6 +164,7 @@ def main():
     first_batch = first(dataset_train)
     z = ae_sp.encode_stage_2_inputs(first_batch["img"].to(device))
 
+    # Training loop
     for epoch in range(n_epochs):
         unet.train()
         epoch_loss, n_loss, il1_loss, ims_loss, i_loss = 0, 0, 0, 0, 0
@@ -185,8 +196,6 @@ def main():
                 ).long()
 
                 # Get model prediction
-                # print(spmr_latent.shape)
-
                 dp_latent, noise_pred = inferer(
                     inputs=dp_images, 
                     autoencoder_model=ae_dp, 
@@ -207,11 +216,13 @@ def main():
                     verbose=False,
                     jay_boolean=True)
 
+                # Calculate noise loss
                 if args.noiseloss == "l2":
                     noise_loss = F.mse_loss(noise_pred.float(), noise.float())
                 elif args.noiseloss == "l1":
                     noise_loss = F.l1_loss(noise_pred.float(), noise.float())
 
+                # Calculate image loss
                 if args.imageloss == "l2":
                     image_l1_loss = F.mse_loss(predicted_orig_latent, dp_latent)
                     image_ssim_loss = 1 - pytorch_ssim.msssim_3d(predicted_orig_latent, dp_latent, normalize=True)
@@ -223,8 +234,8 @@ def main():
                     image_loss = args.alpha*image_ssim_loss + (1 - args.alpha)*image_l1_loss
 
                 loss = noise_loss + image_loss
-                # loss = noise_loss + image_l1_loss
 
+            # Backpropagation and optimization
             scaler.scale(loss).backward()
             scaler.step(optimizer_diff)
             scaler.update()
@@ -244,9 +255,11 @@ def main():
                 })
         epoch_loss_list.append(epoch_loss / (step + 1))
         
+        # Save model checkpoint
         mpath = os.path.join(f"{training_folder}/weights/DiffusionModelUNet", '{}.ckpt'.format(epoch+1))
         torch.save(unet.state_dict(), mpath)
 
+    # Plot and save learning curves
     plt.plot(epoch_loss_list)
     plt.title("Learning Curves", fontsize=20)
     plt.plot(epoch_loss_list)

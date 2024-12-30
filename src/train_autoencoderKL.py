@@ -26,6 +26,7 @@ from generative.networks.schedulers import DDPMScheduler
 
 from data_loaders_dict import get_loader
 
+# Function to calculate the number of parameters in a model
 def get_n_params(model):
     pp=0
     for p in list(model.parameters()):
@@ -37,6 +38,7 @@ def get_n_params(model):
 
 def main():
 
+    # Argument parser for command line arguments
     parser = argparse.ArgumentParser(description='LDM-RR AutoencoderKL')
     parser.add_argument('-d', '--dataset', default='spdp_fbp', type=str)
     parser.add_argument('-mod', '--modality', default='sp', type=str)
@@ -48,6 +50,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
+    # Create a timestamped folder for saving training results
     timestamp = datetime.datetime.now().strftime("%m%d%y%H%M%S")
     training_folder = f"./{args.dataset}_{args.modality}_{timestamp}"
 
@@ -58,11 +61,13 @@ def main():
         print(f"{training_folder} exists!")
         exit()
 
+    # Save the training parameters to a JSON file
     with open(f'{training_folder}/params.json', 'w') as f:
         json.dump(args.__dict__, f, indent=4)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    # Initialize the AutoencoderKL model
     autoencoder = AutoencoderKL(
         spatial_dims=3,
         in_channels=1,
@@ -76,27 +81,32 @@ def main():
     autoencoder.to(device)
     print("AutoencoderKL parameters:", get_n_params(autoencoder))
 
+    # Initialize the PatchDiscriminator model
     discriminator = PatchDiscriminator(spatial_dims=3, num_layers_d=3, num_channels=32, in_channels=1, out_channels=1)
     discriminator.to(device)
 
     print("Results saved at: ", training_folder)
 
+    # Load the training dataset
     dataset_train = get_loader(f'./{args.dataset}/train', batch_size=args.batch_size, mode="train")
     
+    # Define loss functions
     l1_loss = L1Loss()
     adv_loss = PatchAdversarialLoss(criterion="least_squares")
     loss_perceptual = PerceptualLoss(spatial_dims=3, network_type="squeeze", is_fake_3d=True, fake_3d_ratio=0.2)
     loss_perceptual.to(device)
 
-
+    # KL divergence loss function
     def KL_loss(z_mu, z_sigma):
         kl_loss = 0.5 * torch.sum(z_mu.pow(2) + z_sigma.pow(2) - torch.log(z_sigma.pow(2)) - 1, dim=[1, 2, 3, 4])
         return torch.sum(kl_loss) / kl_loss.shape[0]
 
+    # Loss weights
     adv_weight = 0.01
     perceptual_weight = 0.001
     kl_weight = 1e-6
 
+    # Optimizers for the generator and discriminator
     optimizer_g = torch.optim.Adam(params=autoencoder.parameters(), lr=1e-4)
     optimizer_d = torch.optim.Adam(params=discriminator.parameters(), lr=1e-4)
 
@@ -110,6 +120,7 @@ def main():
     intermediary_images = []
     n_example_images = 4
 
+    # Training loop
     for epoch in range(n_epochs):
         autoencoder.train()
         discriminator.train()
@@ -176,13 +187,16 @@ def main():
         epoch_gen_loss_list.append(gen_epoch_loss / (step + 1))
         epoch_disc_loss_list.append(disc_epoch_loss / (step + 1))
 
+        # Save the model checkpoint
         mpath = os.path.join(f"{training_folder}/weights/AutoencoderKL", '{}.ckpt'.format(epoch+1))
         torch.save(autoencoder.state_dict(), mpath)
 
+    # Clean up
     del discriminator
     del loss_perceptual
     torch.cuda.empty_cache()
 
+    # Plot and save the learning curves
     plt.style.use("ggplot")
     plt.title("Learning Curves", fontsize=20)
     plt.plot(epoch_recon_loss_list)
