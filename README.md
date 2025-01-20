@@ -20,7 +20,8 @@ This repository contains:
 * Python >= 3.10
 * Pytorch == 2.4.1
 * CUDA Version >= 12.6
-You can use LDMRR.yaml to create the conda environment. Or you can use requirements.txt to install the used packages. 
+
+You can use `LDMRR.yaml` to create the conda environment. Or you can use `requirements.txt` to install the used packages. 
 ```
 conda env remove --name ldmrr python=3.10 -y
 conda activate ldmrr
