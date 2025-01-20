@@ -16,9 +16,17 @@ This repository contains:
 - Trained model checkpoints in `./checkpoints` and a sample FBP and T1w MRI scan `./samples` directory.
 - Training scripts in `./src` to train modality-specific AutoEncoderKL (compression) models and a latent diffusion model (LDM) for super-resolution.
 
-## Installation
-Instructions to install MONAI can be found [here](https://docs.monai.io/en/stable/installation.html) and the appropriate version of Pytorch using [locally](https://docs.monai.io/en/stable/installation.html).
-Packages used in the current version of this code.
+## 🛠️ Requirements and Installation
+* Python >= 3.10
+* Pytorch == 2.4.1
+* CUDA Version >= 12.6
+You can use LDMRR.yaml to create the conda environment. Or you can use requirements.txt to install the used packages. 
+```
+conda env remove --name ldmrr python=3.10 -y
+conda activate ldmrr
+pip3 install -r requirements.txt
+```
+Instructions to install MONAI can also be found [here](https://docs.monai.io/en/stable/installation.html) and the appropriate version of Pytorch using [locally](https://docs.monai.io/en/stable/installation.html).
 
 ## Dataset
 You should structure your dataset in the following way, where `images` contain low-resolution images, `mrs` contain matching MRI scans and `targets` contain ground-truth high-resolution scans (digital phantoms here). For an example checkout `./src/spdp_fbp` folder. All modality images are 256x256x256 in dimensions (sample images for reference in `./src/sample` directory).
